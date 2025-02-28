@@ -1,0 +1,39 @@
+name: Enforce PR Approval Time Rules
+on:
+  pull_request_review:
+    types: [submitted]
+
+jobs:
+  check-approval-time:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get PR Labels
+        id: labels
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const prNumber = context.payload.pull_request.number;
+            const { data: labels } = await github.rest.issues.listLabelsOnIssue({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber
+            });
+            return labels.map(label => label.name);
+
+      - name: Check Approval Time
+        run: |
+          EMERGENCY_LABEL="emergency-approval"
+          PR_LABELS="${{ steps.labels.outputs.result }}"
+          CURRENT_HOUR=$(date -u +%H)
+          ALLOWED_START=9  # 9 AM UTC
+          ALLOWED_END=18    # 6 PM UTC
+
+          if [[ "$PR_LABELS" == *"$EMERGENCY_LABEL"* ]]; then
+            echo "🚨 Emergency approval detected! Bypassing time restriction."
+            exit 0
+          fi
+
+          if [ "$CURRENT_HOUR" -lt "$ALLOWED_START" ] || [ "$CURRENT_HOUR" -ge "$ALLOWED_END" ]; then
+            echo "❌ PR approvals are only allowed between 9 AM and 6 PM UTC."
+            exit 1
+          fi
