@@ -18,15 +18,18 @@ jobs:
               repo: context.repo.repo,
               issue_number: prNumber
             });
-            return labels.map(label => label.name);
+            core.setOutput("labels", labels.map(label => label.name).join(','));
 
       - name: Check Approval Time
         run: |
           EMERGENCY_LABEL="emergency-approval"
-          PR_LABELS="${{ steps.labels.outputs.result }}"
+          PR_LABELS="${{ steps.labels.outputs.labels }}"
           CURRENT_HOUR=$(date -u +%H)
           ALLOWED_START=9  # 9 AM UTC
           ALLOWED_END=18    # 6 PM UTC
+
+          echo "PR Labels: $PR_LABELS"
+          echo "Current UTC Hour: $CURRENT_HOUR"
 
           if [[ "$PR_LABELS" == *"$EMERGENCY_LABEL"* ]]; then
             echo "🚨 Emergency approval detected! Bypassing time restriction."
