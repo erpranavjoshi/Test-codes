@@ -1,7 +1,7 @@
 name: Enforce PR Approval Time Rules
 on:
-  pull_request_review:
-    types: [submitted]
+  pull_request:
+    types: [opened, synchronize]
 
 jobs:
   check-approval-time:
@@ -26,7 +26,10 @@ jobs:
           PR_LABELS="${{ steps.labels.outputs.labels }}"
           CURRENT_HOUR=$(date -u +%H)
           ALLOWED_START=9  # 9 AM UTC
-          ALLOWED_END=18    # 6 PM UTC
+          ALLOWED_END=11    # 6 PM UTC
+
+          echo "PR Labels: $PR_LABELS"
+          echo "Current UTC Hour: $CURRENT_HOUR"
 
           echo "PR Labels: $PR_LABELS"
           echo "Current UTC Hour: $CURRENT_HOUR"
